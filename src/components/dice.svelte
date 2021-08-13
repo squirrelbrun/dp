@@ -59,7 +59,7 @@
     }
    
     .locked {
-        border: purple solid 4px;
+        border: rgb(119, 232, 67) solid 4px;
         --locked: 15deg;
     }
 
@@ -146,7 +146,7 @@
     } */
 
 
-    
+    /* alt order */
     .order-0{
         --left:calc(var(--leftBase)*0);
         --top:0;

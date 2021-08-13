@@ -12,28 +12,34 @@
 
 <style>
     .card {
-        height: 130px;
-        width: 80px;
+        /* height: 130px; */
+        /* width: 80px; */
+        height: 42vw;
+        width: 25vw;
+
         box-shadow: rgba(0,0,0,0.05) 3px 2px 3px;
         position: absolute;
         border-radius:10px;
         transform-style: preserve-3d;
-        transition: transform 700ms;
+        transition: transform 600ms;
         
     }
     .card.isFaceDown-true{
-        transform: rotateY(180deg) translateX(-140%);
+        transform: translateX(130%) rotateY(-180deg);
+        /* transform: rotateY(-180deg) translateX(-140%); */
         box-shadow: rgba(0,0,0,0.05) -3px 2px 3px;
+        transition: transform 300ms;
     }
 
     .card.isDiscarded-true{
-        transform: rotateY(180deg) translateX(-14%);
+        transform: translateX(10%) rotateY(-180deg);
+        /* transform: rotateY(-180deg) translateX(-14%); */
         z-index: 0;
     }
 
     .card img{
-        height: 130px;
-        width: 80px;
+        height: 42vw;
+        width: 25vw;
         border-radius:10px;
         position: absolute;
         backface-visibility: hidden;
@@ -42,7 +48,7 @@
     }
 
     .facedown{
-        transform: rotateY(180deg);
+        transform: rotateY(-180deg);
     }
 
     

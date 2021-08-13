@@ -16,7 +16,7 @@
   ];
   const minimumUnlockdDice: number = 2;
   const startValue: number = 1;
-  let slowVid: number = 0.3;
+  let slowVid: number = 0.6;
   let autoSort: boolean = true;
   let cannotShuffleDice: boolean = false;
   let diceBag: Array<Die> = [];
@@ -265,7 +265,7 @@
           discardPile.push(activeCard.shift());
           discardPile=discardPile;
           drawCard();
-        }, 1000);
+        }, 400);
       }else{
         drawCard();
       }
@@ -279,7 +279,7 @@
         activeCard[0].isFaceDown = false
         deck = deck; //force reactivity
         resetBag();  
-        setTimeout(()=>{ debounceDraw = true; }, 900);
+        setTimeout(()=>{ debounceDraw = true; }, 600);
       },100) ;
       
   };
@@ -304,8 +304,12 @@
 
 </script>
 <div class="bkg">
+  <!-- src="https://media.giphy.com/media/Q5idwzxmoRkBdiEVpu/giphy.mp4" -->
+  <!--  src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4" -->
+  <!-- https://media.giphy.com/media/3oz8xRQiRlaS1XwnPW/giphy.mp4 -->
   <video
-    src="https://media.giphy.com/media/Q5idwzxmoRkBdiEVpu/giphy.mp4"
+    
+    src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4"
     class="bkgVideo"
     autoplay
     loop
@@ -399,7 +403,7 @@
     justify-content: space-between; 
     gap: 15px 0px;
     z-index: 1;
-    background: beige;
+    /* background: beige; */
     height:100vh;
   }
 
@@ -415,13 +419,13 @@
   }
   
   .deckZone {
-    background: rgba(255, 0, 0, 0.2);
+    /* background: rgba(255, 0, 0, 0.2); */
     grid-row-start: 1;
     grid-column: 2 / span 2;
     justify-self: end;
   }
   .diceZone {
-    background: rgba(0, 0, 200, 0.2);
+    /* background: rgba(0, 0, 200, 0.2); */
     grid-row-start: 2;
     grid-column: 1 / span 3;
 
@@ -433,14 +437,14 @@
    
   }
   .ctrlZone {
-    background: rgba(0, 200, 0, 0.2);
+    /* background: rgba(0, 200, 0, 0.2); */
     grid-row-start: 3;
     grid-column: 1 / span 3;
 
     width: 100%;
     display:flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: space-around;
   }
 
 
@@ -452,10 +456,16 @@
   background: red;
   position: relative;
   top: 39px;
-  left: 10%;
+  left: 6%;
 }
 .pioche{
   cursor: pointer;
+  transition: transform 60ms linear;
+  transform-origin: 150px 90px;
+}
+
+.pioche:active{
+  transform: scale(0.98);
 }
 
 /* dice */
@@ -467,6 +477,20 @@
     font-size: 22px;
     padding: 20px;
     cursor: pointer;
+    transition: transform 60ms linear, box-shadow 60ms linear;
+    transform-origin: center;
+    background: rgb(225, 197, 88);
+    color: #555236;
+    box-shadow: #839122 3px 4px 0;
+    outline: none;
+    border: none;
+    border-radius: 10px;
+    text-shadow: #c8e16f 1px 1px 0px;
+    
+  }
+  .shuffle:active{
+    transform: scale(0.99) translate(2px, 2px);
+    box-shadow: #839122 2px 2px 0;
   }
   .options {
     margin: 0 10px;
@@ -482,13 +506,14 @@
     width:100vw;
     height:100vh;
     overflow: hidden;
-    background: #337495;
+    background: #117aa4;
   }
   .bkgVideo {
     position: absolute;
     z-index: 0;
     height: 100vh;
-    opacity: 0.2;
+    opacity: 0.5;
+    left: -40%;
   }
 
  
