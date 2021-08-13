@@ -302,6 +302,11 @@
 
   shuffleDeck(); // start
 
+  // video 
+  function handleMouseupVideo(e) {
+			e.target.play();
+	}
+
 </script>
 <div class="bkg">
   <!-- src="https://media.giphy.com/media/Q5idwzxmoRkBdiEVpu/giphy.mp4" -->
@@ -314,6 +319,7 @@
     autoplay
     loop
     bind:playbackRate={slowVid}
+    on:mouseup={handleMouseupVideo}
   >
     <track default kind="captions" srclang="en" />
     Sorry, your browser doesn't support embedded videos.

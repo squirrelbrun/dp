@@ -29,6 +29,7 @@
         /* transform: rotateY(-180deg) translateX(-140%); */
         box-shadow: rgba(0,0,0,0.05) -3px 2px 3px;
         transition: transform 300ms;
+       
     }
 
     .card.isDiscarded-true{
@@ -44,6 +45,9 @@
         position: absolute;
         backface-visibility: hidden;
        
+        border: solid 2px #e6c870;
+    }
+    .card.isFaceDown-true img{
         border: solid 2px grey;
     }
 

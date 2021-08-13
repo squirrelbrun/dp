@@ -67,6 +67,7 @@
     .death {
         background-position: 50% 50%;
         border: red solid 4px;
+        opacity: 0.75;
     }
     .d1,
     .parrot {
