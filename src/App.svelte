@@ -3,6 +3,7 @@
   import type { Card } from "./modules/card";
   import Dice from "./components/dice.svelte";
   import Cards from "./components/cards.svelte";
+//import Deck from "./components/deck.svelte";
 
   const diceBagQt: number = 8;
   const diceValuesNames = [
@@ -16,22 +17,21 @@
   const minimumUnlockdDice: number = 2;
   const startValue: number = 1;
   let slowVid: number = 0.3;
-  let autoSort: boolean = false;
-  let cannotShuffle: boolean = false;
+  let autoSort: boolean = true;
+  let cannotShuffleDice: boolean = false;
   let diceBag: Array<Die> = [];
 
-  // let player = {
-  //   "isDead":boolean = false;
-  // }
-
+  // init DiceBag
   for (let i: number = 0; i < diceBagQt; i++) {
     diceBag = [
       ...diceBag,
       {
         id: i,
         value: startValue,
+        ordery: -1,//i,
         isLocked: false,
         valueName: diceValuesNames[startValue],
+        isShuffleing: false,
       },
     ];
   }
@@ -40,69 +40,79 @@
   }
 
   let activeDice: number = diceBagQt;
-  $: activeDice = diceBag
-    .map((obj) => {
+  $: activeDice = diceBag.map((obj) => {
       return obj.isLocked ? 0 : 1;
-    })
-    .reduce((t, n) => t + n, 0);
+    }).reduce((t, n) => t + n, 0);
 
-  console.log("db2", diceBag, diceBag.length);
 
-  let shuffleDisabled: boolean = false;
-  let sortDisabled: boolean = false;
+  const shuffleDice = () => {
+    console.log("shuffle start",diceBag);  // output dicebag avec les modification faites a l'avance !%!??!!!
 
-  const shuffle = () => {
-    if (validateShuffleRights()) {
-      diceBag.map((dice, id) => {
+    if (validateShuffleDiceRights()) {
+
+      if(diceBag[0].ordery === -1){sortBag()}
+
+      diceBag.forEach((dice, id) => {
         let newValue: number = Math.floor(Math.random() * 6);
+        let shuffleingTime:number = 1000;
         if (!dice.isLocked) {
-          diceBag[id].value = newValue;
-        }
-        // dice.value = newValue;// pourquoi ca ca update pas le component, mais la ligne d'au dessus oui ? pourtant l'array est bien modifié !?!?! BUG SVELTE ?
-        if (newValue == 0) {
-          diceBag[id].isLocked = true;
-          // dice.isLocked = true; //meme question
+          diceBag[id].isShuffleing = true;
+
+          setTimeout(()=>{
+              diceBag[id].isShuffleing = false;
+              diceBag[id].value = newValue;
+              //diceBag[id].order = newValues[id].order;
+
+              // check if dead
+              if (newValue == 0) {
+                diceBag[id].isLocked = true;
+                // dice.isLocked = true; n'est pas utilise en .map parce que svelte ne reactive pas sur le .map
+              }
+          
+          }, shuffleingTime);
         }
       });
       if (autoSort) {
-        sortBag();
+        setTimeout(sortBag,1500);
       }
     }
   };
 
   // this should be bind to reactive values
-  const validateShuffleRights = () => {
+  const validateShuffleDiceRights = () => {
     let count: number = 0;
     diceBag.forEach((die) => {
       count += die.isLocked ? 0 : 1;
     });
-    cannotShuffle = count >= minimumUnlockdDice ? false : true;
-    //unlockedDice = count;
-
-    console.log("validatin");
-
-    return !cannotShuffle;
+    cannotShuffleDice = count >= minimumUnlockdDice ? false : true;
+    return !cannotShuffleDice;
   };
 
-  const validateDeath = () => {
-    let count: number = 0;
-    let dead: boolean = false;
-    diceBag.forEach((die) => {
-      count += die.value === 0 ? 1 : 0;
-    });
-    // if player turn = 0 - ile aux morts
-    console.log("deadcount", count);
-    dead = count >= 3 ? true : false;
-    return dead;
-  };
+  // const validateDeath = () => {
+  //   let count: number = 0;
+  //   let dead: boolean = false;
+  //   diceBag.forEach((die) => {
+  //     count += die.value === 0 ? 1 : 0;
+  //   });
+  //   // if player turn = 0 - ile aux morts
+  //   console.log("deadcount", count);
+  //   dead = count >= 3 ? true : false;
+  //   return dead;
+  // };
 
   // test reactivity (ca ca marhce juste avec l<app, ca marche pas si on lock via le component)
   $: if (diceBag) {
-    console.log("woof A", validateShuffleRights(), validateDeath());
+    validateShuffleDiceRights();
+    //console.log("change happened", diceBag);
   }
 
   const sortBag = () => {
-    diceBag = diceBag.sort(compareValue);
+    let fakeBag:Array<Die> = [];
+    fakeBag = diceBag.sort(compareValue);
+    fakeBag.forEach((refDie, index)=>{
+      diceBag[index].ordery=index;
+    });
+    diceBag = diceBag.sort(compareId);
   };
 
   function compareValue(a, b) {
@@ -114,15 +124,29 @@
     }
     return 0;
   }
+  function compareId(a, b) {
+    if (a.id < b.id) {
+      return -1;
+    }
+    if (a.id > b.id) {
+      return 1;
+    }
+    return 0;
+  }
 
   const resetBag = () => {
     diceBag.forEach((die) => {
       die.value = 1;
       die.isLocked = false;
+      die.ordery = -1;
     });
     diceBag = diceBag; // react force reactivity qui se fait pas dans un foreach
   };
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // INIT DECK OF CARD
   // compose into component deck + reactive active card
   interface DeckConfig {
     value: number;
@@ -206,6 +230,7 @@
   let activeCard: Array<Card> = [];
   let discardPile: Array<Card> = [];
   let deck: Array<Card> = [];
+  let debounceDraw: boolean = true;
 
   const initDeck = () => {
     let cardIndex: number = 0;
@@ -226,15 +251,37 @@
     });
   };
 
-  const drawCard = () => {
-    if (deck.length != 0) {
-      discardPile.push(activeCard.shift());
-      activeCard.push(deck.shift());
-      activeCard[0].isFaceDown = false;
-      deck = deck; //force reactivity
-      resetBag();
-      slowVid = 0.5
+
+
+  const nextTurn = () => {
+    if (deck.length != 0 && debounceDraw) {
+      console.log(debounceDraw);
+      debounceDraw = false;
+      if(activeCard.length != 0){
+        activeCard[0].isDiscarded = true;
+        activeCard[0].isFaceDown = true;
+        
+        setTimeout(()=>{
+          discardPile.push(activeCard.shift());
+          discardPile=discardPile;
+          drawCard();
+        }, 1000);
+      }else{
+        drawCard();
+      }
     }
+  };
+
+  const drawCard = () => {
+      activeCard.push(deck.shift());
+      activeCard[0]=activeCard[0];
+      setTimeout(()=>{
+        activeCard[0].isFaceDown = false
+        deck = deck; //force reactivity
+        resetBag();  
+        setTimeout(()=>{ debounceDraw = true; }, 900);
+      },100) ;
+      
   };
 
   const shuffleDeck = () => {
@@ -242,10 +289,10 @@
     activeCard = [];
     discardPile = [];
     initDeck();
-    deck = shuffleArray(deck);
+    deck = shuffleDeckArray(deck);
   };
 
-  function shuffleArray(array) {
+  function shuffleDeckArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
@@ -271,14 +318,20 @@
 
 <main>
   <section class="deckZone">
-    <div class="activeCard">
-      {#each activeCard as myActiveCard (myActiveCard.id)}
-        <Cards opt={myActiveCard} />
-      {/each}
-    </div>
-    <div class="deck pioche" on:click={drawCard}>
+    
+    <div class="deck pioche" on:click={nextTurn}>
       {#each deck as myCard (myCard.id)}
         <Cards opt={myCard} />
+      {/each}
+    </div>
+    <div class="deck discard">
+      {#each discardPile as myCard (myCard.id)}
+        <Cards opt={myCard} />
+      {/each}
+    </div>
+    <div class="deck activeCard">
+      {#each activeCard as myActiveCard (myActiveCard.id)}
+        <Cards opt={myActiveCard} />
       {/each}
     </div>
   </section>
@@ -290,21 +343,34 @@
   </section>
 
   <section class="ctrlZone">
-    
+
+
     <div class="options">
       <button on:click={sortBag} class="sort " disabled={autoSort}>Ordoner</button>
       <br />
       <input type="checkbox" bind:checked={autoSort} id="autoSort" />
       <label for="autoSort">Auto-Sort</label>
     </div>
+    
+    <button on:click={shuffleDice} disabled={cannotShuffleDice} class="shuffle">Brasser les {activeDice} dés</button>
+
+    
+  </section>
+</main>
+<!-- <main>
+
+
+  <section class="ctrlZone">
+    
+    
     <div class="options">
         <button class="sort" on:click={resetBag}>Reset</button>
     <button class="sort" on:click={shuffleDeck}>ShuffleDeck</button>
 
     </div>
-    <button on:click={shuffle} disabled={cannotShuffle} class="shuffle">Brasser les {activeDice} dés</button>
+    
   </section>
-</main>
+</main> -->
 
 <style>
   :root {
@@ -312,7 +378,7 @@
       Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   }
 
-  main {
+  /* main {
     text-align: center;
     padding: 1em;
     position: relative;
@@ -322,27 +388,95 @@
     justify-content: center;
     z-index: 1;
   
+  } */
+/* GRID */
+  main {
+    display: grid;
+    position: relative;
+    grid-template-columns: 33% 33% 33%;
+    grid-template-rows: 33% auto 33%;
+    justify-items: start;
+    justify-content: space-between; 
+    gap: 15px 0px;
+    z-index: 1;
+    background: beige;
+    height:100vh;
   }
 
+  section{
+    width: 100%;
+    height: 100%;
+  }
+
+  .playerZone {
+    background: rgba(255, 255, 0, 0.2);
+    grid-row-start: 1;
+    grid-column: 1 / 2;
+  }
+  
+  .deckZone {
+    background: rgba(255, 0, 0, 0.2);
+    grid-row-start: 1;
+    grid-column: 2 / span 2;
+    justify-self: end;
+  }
+  .diceZone {
+    background: rgba(0, 0, 200, 0.2);
+    grid-row-start: 2;
+    grid-column: 1 / span 3;
+
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    grid-template-rows: 50% 50%;
+    align-items: center;
+    justify-items: center;
+   
+  }
+  .ctrlZone {
+    background: rgba(0, 200, 0, 0.2);
+    grid-row-start: 3;
+    grid-column: 1 / span 3;
+
+    width: 100%;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+
+
+/* CARDS */
+.deck{
+  width: 0;
+  height: 0;
+  background: red;
+  position: relative;
+  top: 39px;
+  left: 10%;
+}
+.pioche{
+  cursor: pointer;
+}
+
+/* dice */
+
+
+/* bouttons */
+
   .shuffle {
-    margin-top: 30px;
     font-size: 22px;
     padding: 20px;
     cursor: pointer;
   }
   .options {
-    margin: 30px 0 10px 0;
+    margin: 0 10px;
   }
   .sort {
     padding: 10px;
-    margin: 10px;
   }
-  .deck {
-    /* border: solid 2px blue; */
-    height: 200px;
-    width: 120px;
-    position: relative;
-  }
+ 
+
+/* template bkg */
   .bkg{
     position: absolute;
     width:100vw;
@@ -357,37 +491,6 @@
     opacity: 0.2;
   }
 
-  section {
-    position: relative;
-    display: flex;
-    width: 100vw;
-    
-  }
+ 
 
-  .deckZone {
-    /* background: rgba(255, 0, 0, 0.2); */
-    height: 30vh;
-  }
-  .activeCard{
-    width: 50vw;
-    /* background: rgba(0, 200, 0, 0.2); */
-  }
-  .pioche{
-    width: 50vw;
-    /* background: rgba(0, 0, 200, 0.2); */
-  }
-
-  .diceZone {
-    /* background: rgba(0, 0, 200, 0.2); */
-    flex-wrap: wrap;
-    justify-content: center;
-    vertical-align: middle;
-  }
-  .ctrlZone {
-    /* background: rgba(0, 200, 0, 0.2); */
-    height: 33vh;
-    display: flex;
-    justify-content: center;
-    align-items: end;
-  }
 </style>

@@ -4,5 +4,6 @@ export interface Card {
     valueName?: string;
     altRules?: string;
     isFaceDown?: boolean;
+    isDiscarded?: boolean;
 }
 // all optional pour active card qui peut etre empty

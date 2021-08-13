@@ -3,4 +3,6 @@ export interface Die {
     value: number;
     valueName: string;
     isLocked: boolean;
+    isShuffleing: boolean;
+    ordery: number;
 }
