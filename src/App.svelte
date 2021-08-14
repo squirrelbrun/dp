@@ -3,6 +3,7 @@
   import type { Card } from "./modules/card";
   import Dice from "./components/dice.svelte";
   import Cards from "./components/cards.svelte";
+  import Points from "./components/points.svelte";
 //import Deck from "./components/deck.svelte";
 
   const diceBagQt: number = 8;
@@ -75,6 +76,8 @@
       if (autoSort) {
         setTimeout(sortBag,1500);
       }
+
+      setTimeout(getHandScore,1000);
     }
   };
 
@@ -164,7 +167,7 @@
     },
     {
       value: 2,
-      valueName: "shine",
+      valueName: "diamond",
       altRules: "Diamand: Comme si il y avait un diamand déjà en jeu",
       amountInDeck: 4,
     },
@@ -302,24 +305,119 @@
 
   shuffleDeck(); // start
 
-  // video 
-  function handleMouseupVideo(e) {
-			e.target.play();
-	}
+
+  let score:number=0;
+  //setInterval(()=>{getHandScore},2000);
+
+  interface Scoring {
+    value:number;
+    valueName:string;
+    amount:number;
+  }
+
+  const getHandScore = () => {
+    // init
+    let total:number = 0;
+    let allScoreBonus:boolean = true;
+    let groupDiceValue:Array<Scoring> = [
+      {value: 0, amount: 0, valueName:"death", },
+      {value: 1, amount: 0, valueName:"parrot"},
+      {value: 2, amount: 0, valueName:"monkey"},
+      {value: 3, amount: 0, valueName:"sword"},
+      {value: 4, amount: 0, valueName:"diamond"},
+      {value: 5, amount: 0, valueName:"doublon"},
+    ]
+    let sameDieValue = [0,0,0,100,200,500,1000,2000,4000,4000];
+    let cardRule:string = activeCard[0].valueName;
+  
+    // Calculer les diamands et doublons
+    diceBag.forEach((dice)=>{
+      if(dice.valueName === "diamond" || dice.valueName === "doublon"){
+        total += 100;
+      }
+      groupDiceValue.map((scoreLine)=>{
+        if(scoreLine.value === dice.value){
+          scoreLine.amount ++;
+        }
+      });
+    });
+
+    // Rule Zoo
+    if(cardRule === "zoo"){
+      let zooTransferValue:number = 0; // deplacer les parrot dans la cage des singes
+      groupDiceValue.forEach((scoreLine)=>{
+        if(scoreLine.valueName === "parrot"){
+          zooTransferValue = scoreLine.amount;
+          scoreLine.amount = 0;
+        }
+      });
+      groupDiceValue.forEach((scoreLine)=>{
+        if(scoreLine.valueName === "monkey"){
+          scoreLine.amount += zooTransferValue;
+        }
+      });
+    }
+    
+    // calculer les pareils et bonus
+    groupDiceValue.forEach((scoreLine)=>{
+        if(scoreLine.value > 0){
+          total += sameDieValue[scoreLine.amount];
+        }
+        if(scoreLine.value === 0 && scoreLine.amount > 0){// si un mort
+          allScoreBonus = false;
+        }
+        if(scoreLine.value !== 0 && scoreLine.value !== 4 && scoreLine.value !== 5 && scoreLine.amount > 0 && scoreLine.amount < 3){// si des 3 pareils pour les des sans valeurs
+          allScoreBonus = false;
+        }
+    });
+
+    // Rule extra shiny cards
+    if(cardRule === "diamond" || cardRule === "doublon") {
+      total += 100;
+      groupDiceValue.map((scoreLine)=>{
+        if(scoreLine.valueName === cardRule){
+          scoreLine.amount ++;
+        }
+      });
+    }
+
+    // Bonus
+    if (allScoreBonus) {
+      total += 500;
+    }
+    // Rule double
+    if(cardRule === "double"){
+      total += total;
+    }
+    // Rule Ships
+    if(cardRule.startsWith("ship")){
+      // TODO s'assurer ici que les 3 sword kills score
+      let shipValues:Array<number> = [300,500,1000];
+      let swordAmount:number = parseInt(cardRule.slice(-1));
+      groupDiceValue.forEach((scoreLine)=>{
+        if(scoreLine.valueName === 'sword'){
+          if(scoreLine.amount >= swordAmount){
+            total += shipValues[swordAmount-2];
+          }else{
+            total = shipValues[swordAmount-2] * -1;
+          }
+        }
+      });
+    }
+
+    score = total;
+}
+ 
 
 </script>
 <div class="bkg">
-  <!-- src="https://media.giphy.com/media/Q5idwzxmoRkBdiEVpu/giphy.mp4" -->
-  <!--  src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4" -->
-  <!-- https://media.giphy.com/media/3oz8xRQiRlaS1XwnPW/giphy.mp4 -->
+
   <video
-    
     src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4"
     class="bkgVideo"
     autoplay
     loop
     bind:playbackRate={slowVid}
-    on:mouseup={handleMouseupVideo}
   >
     <track default kind="captions" srclang="en" />
     Sorry, your browser doesn't support embedded videos.
@@ -327,6 +425,9 @@
 </div>
 
 <main>
+  <section class="playerZone">
+      <Points score={score}/>
+  </section>
   <section class="deckZone">
     
     <div class="deck pioche" on:click={nextTurn}>
@@ -419,10 +520,20 @@
   }
 
   .playerZone {
-    background: rgba(255, 255, 0, 0.2);
+    /* background: rgba(255, 255, 0, 0.2); */
     grid-row-start: 1;
     grid-column: 1 / 2;
+
+    justify-content: end;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+
+    font-weight: bold;
+    font-size: 30px;
+
   }
+ 
   
   .deckZone {
     /* background: rgba(255, 0, 0, 0.2); */
@@ -483,7 +594,7 @@
     font-size: 22px;
     padding: 20px;
     cursor: pointer;
-    transition: transform 60ms linear, box-shadow 60ms linear;
+    transition: transform 60ms linear, box-shadow 60ms linear, color 100ms linear;
     transform-origin: center;
     background: rgb(225, 197, 88);
     color: #555236;
@@ -492,12 +603,16 @@
     border: none;
     border-radius: 10px;
     text-shadow: #c8e16f 1px 1px 0px;
-    
   }
-  .shuffle:active{
+  .shuffle:disabled{
+    color: #9d9657;
+    cursor: not-allowed;
+  }
+  .shuffle:active:not(.shuffle:disabled){
     transform: scale(0.99) translate(2px, 2px);
     box-shadow: #839122 2px 2px 0;
   }
+  
   .options {
     margin: 0 10px;
   }

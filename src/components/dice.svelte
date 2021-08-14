@@ -16,7 +16,7 @@
 
 <button
     class=" order-{opt.ordery} d{opt.value} {cssLocked} {cssIsShuffleing} die "
-    style="--withShuffle:{cssIsShuffleing2}"
+    style="--withShuffle:{cssIsShuffleing2}; --delay:-{opt.ordery}00ms"
     on:click={lockToggle}
     aria-label="{opt.id} {opt.valueName} {opt.isLocked}"
 ></button>
@@ -29,6 +29,7 @@
         --topBase: 24.5vw;
         --left: 0vw;
         --top: 0vw;
+        --delay: -20ms;
         --withShuffle: 1;
         --locked: 0;
 
@@ -55,6 +56,7 @@
 
         transform: translate(var(--left), var(--top)) rotate(var(--locked)) scale(var(--withShuffle)) ;
         transition: transform 200ms ease-out;
+        
        
     }
    
@@ -91,7 +93,7 @@
     }
     .isShuffleing{
         animation: animate-background linear 320ms infinite;
-        
+        animation-delay: var(--delay);
     }
 
     @keyframes animate-background {
