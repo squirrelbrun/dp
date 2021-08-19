@@ -164,12 +164,7 @@
   }
 
   const deckConfig: Array<DeckConfig> = [
-    {
-      value: 7,
-      valueName: "chest",
-      altRules: "Coffre: Vous gardez les points protégés si vous mourrez",
-      amountInDeck: 4,
-    },
+    
     {
       value: 1,
       valueName: "zoo",
@@ -209,7 +204,12 @@
         "Bateau Pirate 2: Vous devez avoir 2 épés pour faire 300 points, sinon vous perdez 300 points",
       amountInDeck: 2,
     },
-    
+    {
+      value: 7,
+      valueName: "chest",
+      altRules: "Coffre: Vous gardez les points protégés si vous mourrez",
+      amountInDeck: 4,
+    },
     {
       value: 8,
       valueName: "witch",
@@ -317,8 +317,8 @@
     return array;
   }
 
-  //shuffleDeck(); // start shuffled
-  initDeck(); // start debug
+  shuffleDeck(); // start shuffled
+  //initDeck(); // start debug
 
 
   let score:number=0;
