@@ -13,6 +13,8 @@
 <style>
     p{
         margin: 0 10px;
+        font-size: 30px;
+        font-weight: bold;
     }
   /* score */
     .score{

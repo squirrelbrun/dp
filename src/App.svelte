@@ -15,12 +15,15 @@
     "diamond",
     "doublon",
   ];
-  const minimumUnlockdDice: number = 2;
   const startValue: number = 1;
+  const minimumUnlockdDice: number = 2;
   let slowVid: number = 0.6;
   let autoSort: boolean = true;
   let cannotShuffleDice: boolean = false;
   let diceBag: Array<Die> = [];
+  let turnCounter:number = 0;
+  let isDead:boolean = false;
+  let isIleAuxMorts:boolean = false;
 
   // init DiceBag
   for (let i: number = 0; i < diceBagQt; i++) {
@@ -36,6 +39,7 @@
       },
     ];
   }
+
   $: for (let i: number = 0; i < diceBagQt; i++) {
     diceBag[i].valueName = diceValuesNames[diceBag[i].value];
   }
@@ -44,14 +48,14 @@
   $: activeDice = diceBag.map((obj) => {
       return obj.isLocked ? 0 : 1;
     }).reduce((t, n) => t + n, 0);
-
-
+  
+  
   const shuffleDice = () => {
     console.log("shuffle start",diceBag);  // output dicebag avec les modification faites a l'avance !%!??!!!
 
     if (validateShuffleDiceRights()) {
 
-      if(diceBag[0].ordery === -1){sortBag()}
+      if(diceBag[0].ordery === -1){sortBag()} 
 
       diceBag.forEach((dice, id) => {
         let newValue: number = Math.floor(Math.random() * 6);
@@ -62,10 +66,8 @@
           setTimeout(()=>{
               diceBag[id].isShuffleing = false;
               diceBag[id].value = newValue;
-              //diceBag[id].order = newValues[id].order;
-
-              // check if dead
-              if (newValue == 0) {
+              // check if dead die
+              if (newValue === 0) {
                 diceBag[id].isLocked = true;
                 // dice.isLocked = true; n'est pas utilise en .map parce que svelte ne reactive pas sur le .map
               }
@@ -76,13 +78,16 @@
       if (autoSort) {
         setTimeout(sortBag,1500);
       }
-
       setTimeout(getHandScore,1000);
+      turnCounter++;
     }
   };
 
   // this should be bind to reactive values
   const validateShuffleDiceRights = () => {
+    if(isDead){
+      return !cannotShuffleDice;
+    }
     let count: number = 0;
     diceBag.forEach((die) => {
       count += die.isLocked ? 0 : 1;
@@ -103,7 +108,7 @@
   //   return dead;
   // };
 
-  // test reactivity (ca ca marhce juste avec l<app, ca marche pas si on lock via le component)
+  // must be on dicebag, pour checker si on lock des des si on peut encore brasser les des
   $: if (diceBag) {
     validateShuffleDiceRights();
     //console.log("change happened", diceBag);
@@ -160,6 +165,12 @@
 
   const deckConfig: Array<DeckConfig> = [
     {
+      value: 7,
+      valueName: "chest",
+      altRules: "Coffre: Vous gardez les points protégés si vous mourrez",
+      amountInDeck: 4,
+    },
+    {
       value: 1,
       valueName: "zoo",
       altRules: "Zoo: Les singes et perroquets valent le même dé",
@@ -198,16 +209,17 @@
         "Bateau Pirate 2: Vous devez avoir 2 épés pour faire 300 points, sinon vous perdez 300 points",
       amountInDeck: 2,
     },
-    {
-      value: 7,
-      valueName: "chest",
-      altRules: "Coffre: Vous gardez les points protégés si vous mourrez",
-      amountInDeck: 4,
-    },
+    
     {
       value: 8,
       valueName: "witch",
       altRules: "Sorcière: Vous pouvez relancer un seul dé tête de mort",
+      amountInDeck: 4,
+    },
+    {
+      value: 11,
+      valueName: "double",
+      altRules: "Pirate: Vous doublez vos points",
       amountInDeck: 4,
     },
     {
@@ -222,18 +234,12 @@
       altRules: "Deux têtes de mort: Vous avez déjà deux têtes de mort en jeu",
       amountInDeck: 2,
     },
-    {
-      value: 11,
-      valueName: "double",
-      altRules: "Pirate: Vous doublez vos points",
-      amountInDeck: 4,
-    },
   ];
 
   let activeCard: Array<Card> = [];
   let discardPile: Array<Card> = [];
   let deck: Array<Card> = [];
-  let debounceDraw: boolean = true;
+  let throttleDraw: boolean = true;
 
   const initDeck = () => {
     let cardIndex: number = 0;
@@ -257,9 +263,8 @@
 
 
   const nextTurn = () => {
-    if (deck.length != 0 && debounceDraw) {
-      console.log(debounceDraw);
-      debounceDraw = false;
+    if (deck.length != 0 && throttleDraw) {
+      throttleDraw = false;
       if(activeCard.length != 0){
         activeCard[0].isDiscarded = true;
         activeCard[0].isFaceDown = true;
@@ -279,13 +284,22 @@
       activeCard.push(deck.shift());
       activeCard[0]=activeCard[0];
       setTimeout(()=>{
+        // todo : log score
+        resetPlayerTurn();
         activeCard[0].isFaceDown = false
         deck = deck; //force reactivity
-        resetBag();  
-        setTimeout(()=>{ debounceDraw = true; }, 600);
+        setTimeout(()=>{ throttleDraw = true; }, 600);
       },100) ;
       
   };
+
+  const resetPlayerTurn = () => {
+    resetBag();  
+    turnCounter = 0;
+    score = 0;
+    isIleAuxMorts = false;
+    isDead = false;
+  }
 
   const shuffleDeck = () => {
     deck = [];
@@ -303,7 +317,8 @@
     return array;
   }
 
-  shuffleDeck(); // start
+  //shuffleDeck(); // start shuffled
+  initDeck(); // start debug
 
 
   let score:number=0;
@@ -311,33 +326,33 @@
 
   interface Scoring {
     value:number;
-    valueName:string;
     amount:number;
+    lockedAmount:number;
+    valueName:string;
   }
 
   const getHandScore = () => {
     // init
-    let total:number = 0;
     let allScoreBonus:boolean = true;
     let groupDiceValue:Array<Scoring> = [
-      {value: 0, amount: 0, valueName:"death", },
-      {value: 1, amount: 0, valueName:"parrot"},
-      {value: 2, amount: 0, valueName:"monkey"},
-      {value: 3, amount: 0, valueName:"sword"},
-      {value: 4, amount: 0, valueName:"diamond"},
-      {value: 5, amount: 0, valueName:"doublon"},
+      {value: 0, amount: 0, lockedAmount: 0, valueName:"death" },
+      {value: 1, amount: 0, lockedAmount: 0, valueName:"parrot"},
+      {value: 2, amount: 0, lockedAmount: 0, valueName:"monkey"},
+      {value: 3, amount: 0, lockedAmount: 0, valueName:"sword"},
+      {value: 4, amount: 0, lockedAmount: 0, valueName:"diamond"},
+      {value: 5, amount: 0, lockedAmount: 0, valueName:"doublon"},
     ]
     let sameDieValue = [0,0,0,100,200,500,1000,2000,4000,4000];
     let cardRule:string = activeCard[0].valueName;
-  
-    // Calculer les diamands et doublons
+    
+    // count dice groupDiceValue
     diceBag.forEach((dice)=>{
-      if(dice.valueName === "diamond" || dice.valueName === "doublon"){
-        total += 100;
-      }
       groupDiceValue.map((scoreLine)=>{
         if(scoreLine.value === dice.value){
           scoreLine.amount ++;
+          if(dice.isLocked){
+            scoreLine.lockedAmount ++;
+          }
         }
       });
     });
@@ -358,30 +373,68 @@
       });
     }
     
-    // calculer les pareils et bonus
-    groupDiceValue.forEach((scoreLine)=>{
-        if(scoreLine.value > 0){
-          total += sameDieValue[scoreLine.amount];
-        }
-        if(scoreLine.value === 0 && scoreLine.amount > 0){// si un mort
-          allScoreBonus = false;
-        }
-        if(scoreLine.value !== 0 && scoreLine.value !== 4 && scoreLine.value !== 5 && scoreLine.amount > 0 && scoreLine.amount < 3){// si des 3 pareils pour les des sans valeurs
-          allScoreBonus = false;
-        }
-    });
-
-    // Rule extra shiny cards
+    // Rule add extra dice cards
     if(cardRule === "diamond" || cardRule === "doublon") {
-      total += 100;
       groupDiceValue.map((scoreLine)=>{
         if(scoreLine.valueName === cardRule){
           scoreLine.amount ++;
         }
       });
     }
+    if(cardRule === "dead"){
+      groupDiceValue.map((scoreLine)=>{
+        if(scoreLine.valueName === "death"){
+          scoreLine.amount ++;
+        }
+      });     
+    }
+    if(cardRule === "dead2"){
+      groupDiceValue.map((scoreLine)=>{
+        if(scoreLine.valueName === "death"){
+          scoreLine.amount += 2;
+        }
+      });
+    }
 
-    // Bonus
+    // check il aux morts et death
+    groupDiceValue.forEach((scoreLine)=>{
+      if(scoreLine.valueName === 'death'){
+        if(turnCounter === 1 && scoreLine.amount > 3){
+          isIleAuxMorts = true;
+        }else if(scoreLine.amount >= 3){
+          isDead = true;
+          allScoreBonus = false;
+        }
+      }
+    });
+
+    // Rule Chest : change Scoring Amount to locked amount
+    if(cardRule === 'chest' && isDead){
+      groupDiceValue.map((scoreLine)=>{
+        console.log("chest check",scoreLine.amount, scoreLine.lockedAmount ,scoreLine.valueName  )
+        scoreLine.amount = scoreLine.lockedAmount;
+        console.log("chest check 2",scoreLine.amount, scoreLine.lockedAmount ,scoreLine.valueName  )
+
+      });
+    }
+
+    // Scoring pareils + doublons/diamands
+    let total:number = 0;
+    
+    // calculer les pareils et bonus
+    groupDiceValue.forEach((scoreLine)=>{
+        if(scoreLine.valueName !== 'death'){
+          total += sameDieValue[scoreLine.amount];
+          if(scoreLine.valueName === 'doublon' || scoreLine.valueName === 'diamond'){
+            total += scoreLine.amount * 100;
+          }
+        }
+        if(scoreLine.value !== 0 && scoreLine.value !== 4 && scoreLine.value !== 5 && scoreLine.amount > 0 && scoreLine.amount < 3){// si pas 3 pareils pour les des sans valeurs
+          allScoreBonus = false;
+        }
+    });
+
+    // Scoring Bonus
     if (allScoreBonus) {
       total += 500;
     }
@@ -391,7 +444,6 @@
     }
     // Rule Ships
     if(cardRule.startsWith("ship")){
-      // TODO s'assurer ici que les 3 sword kills score
       let shipValues:Array<number> = [300,500,1000];
       let swordAmount:number = parseInt(cardRule.slice(-1));
       groupDiceValue.forEach((scoreLine)=>{
@@ -403,9 +455,12 @@
           }
         }
       });
+    }else if(isDead && cardRule != "chest"){ // normal zero from death
+      total = 0;
     }
 
-    score = total;
+    score = total; 
+    validateShuffleDiceRights();
 }
  
 
@@ -427,6 +482,7 @@
 <main>
   <section class="playerZone">
       <Points score={score}/>
+      <p>turn : {turnCounter}<br>dead : {isDead} <br> IAM: {isIleAuxMorts}</p>
   </section>
   <section class="deckZone">
     
@@ -524,13 +580,10 @@
     grid-row-start: 1;
     grid-column: 1 / 2;
 
-    justify-content: end;
+    justify-content: flex-end;
     align-items: center;
     display: flex;
     flex-direction: column;
-
-    font-weight: bold;
-    font-size: 30px;
 
   }
  
