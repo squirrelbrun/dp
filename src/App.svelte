@@ -226,7 +226,7 @@
       value: 10,
       valueName: "dead2",
       altRules: "Deux têtes de mort: Vous avez déjà deux têtes de mort en jeu",
-      amountInDeck: 20,
+      amountInDeck: 2,
     },
   ];
 
@@ -471,11 +471,12 @@
     score = (!isIleAuxMorts)? total : scoreIleAuxMorts ; 
     validateShuffleDiceAllowed();
 }
- 
+
+let videoDisabled:boolean = false;
 
 </script>
 
-<Bkg isIleAuxMorts={isIleAuxMorts} isDead={isDead}/>
+<Bkg {isIleAuxMorts} {isDead} {videoDisabled}/>
 
 <main>
   <section class="playerZone">
@@ -513,6 +514,10 @@
       <br />
       <input type="checkbox" bind:checked={autoSort} id="autoSort" />
       <label for="autoSort">Auto-Sort</label>
+      <br />
+      <br />
+      <input type="checkbox" bind:checked={videoDisabled} id="videoDisabled" />
+      <label for="videoDisabled">Disable videos</label>
     </div>
     
     <ShuffleBtn on:click={shuffleDice} disabled={cannotShuffleDice} content="Brasser les dés ({activeDice})"/>

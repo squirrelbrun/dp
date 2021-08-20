@@ -1,11 +1,13 @@
 <script lang="ts">
     export let isIleAuxMorts:boolean = false;
     export let isDead:boolean = false;
+    export let videoDisabled:boolean = false;
     let slowVid: number = 0.6;
-    
+    // alt video : t2uEYBdHWXEkqx9M9n
+    // 
 </script>
 
-<div class="bkg isDead-{isDead}">
+<div class="bkg isDead-{isDead} videoDisabled-{videoDisabled}">
 
     <video
       src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4"
@@ -54,9 +56,15 @@
   }
   .iam-false{
       opacity: 0;
+
   }
   .iam-true{
       opacity: 0.5;
+      left: -75%;
+  }
+
+  .videoDisabled-true video{
+      display: none;
   }
 
 </style>

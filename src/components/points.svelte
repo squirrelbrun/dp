@@ -10,7 +10,7 @@
 </script>
 
 <p class="score isNegative-{isNegative} isIAM-{iam}">{score}</p>
-<p class="messageIAM-{iam}">{scoreMessage}</p>
+<p class="message IAM-{iam}">{scoreMessage}</p>
 
 <style>
     p{
@@ -39,7 +39,10 @@
         --color: #f0cbab;
         --colorShadow: #9d9760;
     }
-    .messageIAM-true{
+    .message.IAM-true{
         font-size: 17px;
+    }
+    .message{
+        margin-bottom: 14px;
     }
 </style>
