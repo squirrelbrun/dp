@@ -4,6 +4,8 @@
   import Dice from "./components/dice.svelte";
   import Cards from "./components/cards.svelte";
   import Points from "./components/points.svelte";
+  import Bkg from "./components/bkg.svelte";
+  import ShuffleBtn from  "./components/shuffleBtn.svelte";
 //import Deck from "./components/deck.svelte";
 
   const diceBagQt: number = 8;
@@ -17,13 +19,16 @@
   ];
   const startValue: number = 1;
   const minimumUnlockdDice: number = 2;
-  let slowVid: number = 0.6;
   let autoSort: boolean = true;
   let cannotShuffleDice: boolean = false;
   let diceBag: Array<Die> = [];
   let turnCounter:number = 0;
   let isDead:boolean = false;
   let isIleAuxMorts:boolean = false;
+  let iamCounter:number = 0;
+  let throttleDiceBag: boolean = false;
+  let rerollDeatRule:boolean = false;
+
 
   // init DiceBag
   for (let i: number = 0; i < diceBagQt; i++) {
@@ -53,8 +58,8 @@
   const shuffleDice = () => {
     console.log("shuffle start",diceBag);  // output dicebag avec les modification faites a l'avance !%!??!!!
 
-    if (validateShuffleDiceRights()) {
-
+    if (!throttleDiceBag) {
+      throttleDiceBag = true;
       if(diceBag[0].ordery === -1){sortBag()} 
 
       diceBag.forEach((dice, id) => {
@@ -79,39 +84,28 @@
         setTimeout(sortBag,1500);
       }
       setTimeout(getHandScore,1000);
+      setTimeout(()=>{throttleDiceBag = false;},2000);
       turnCounter++;
     }
   };
 
   // this should be bind to reactive values
-  const validateShuffleDiceRights = () => {
+  const validateShuffleDiceAllowed = () => {
     if(isDead){
-      return !cannotShuffleDice;
+      cannotShuffleDice = true;
+    }else{
+      let count: number = 0;
+      diceBag.forEach((die) => {
+        count += die.isLocked ? 0 : 1;
+      });
+      cannotShuffleDice = count >= minimumUnlockdDice ? false : true;
     }
-    let count: number = 0;
-    diceBag.forEach((die) => {
-      count += die.isLocked ? 0 : 1;
-    });
-    cannotShuffleDice = count >= minimumUnlockdDice ? false : true;
     return !cannotShuffleDice;
   };
 
-  // const validateDeath = () => {
-  //   let count: number = 0;
-  //   let dead: boolean = false;
-  //   diceBag.forEach((die) => {
-  //     count += die.value === 0 ? 1 : 0;
-  //   });
-  //   // if player turn = 0 - ile aux morts
-  //   console.log("deadcount", count);
-  //   dead = count >= 3 ? true : false;
-  //   return dead;
-  // };
-
-  // must be on dicebag, pour checker si on lock des des si on peut encore brasser les des
+  // Must be on dicebag, pour checker si on lock des des si on peut encore brasser les des
   $: if (diceBag) {
-    validateShuffleDiceRights();
-    //console.log("change happened", diceBag);
+    validateShuffleDiceAllowed();
   }
 
   const sortBag = () => {
@@ -232,14 +226,14 @@
       value: 10,
       valueName: "dead2",
       altRules: "Deux têtes de mort: Vous avez déjà deux têtes de mort en jeu",
-      amountInDeck: 2,
+      amountInDeck: 20,
     },
   ];
 
   let activeCard: Array<Card> = [];
   let discardPile: Array<Card> = [];
   let deck: Array<Card> = [];
-  let throttleDraw: boolean = true;
+  let throttleDraw: boolean = false;
 
   const initDeck = () => {
     let cardIndex: number = 0;
@@ -263,8 +257,9 @@
 
 
   const nextTurn = () => {
-    if (deck.length != 0 && throttleDraw) {
-      throttleDraw = false;
+    if (deck.length != 0 && !throttleDraw) {
+      throttleDraw = true;
+      throttleDiceBag =  true;
       if(activeCard.length != 0){
         activeCard[0].isDiscarded = true;
         activeCard[0].isFaceDown = true;
@@ -281,14 +276,20 @@
   };
 
   const drawCard = () => {
+      
       activeCard.push(deck.shift());
       activeCard[0]=activeCard[0];
+      
       setTimeout(()=>{
         // todo : log score
         resetPlayerTurn();
         activeCard[0].isFaceDown = false
         deck = deck; //force reactivity
-        setTimeout(()=>{ throttleDraw = true; }, 600);
+        // Rule Witch
+        if(activeCard[0].valueName === "witch"){
+          rerollDeatRule = true;
+        }
+        setTimeout(()=>{ throttleDraw = false; throttleDiceBag = false; }, 600);
       },100) ;
       
   };
@@ -299,6 +300,7 @@
     score = 0;
     isIleAuxMorts = false;
     isDead = false;
+    rerollDeatRule = false;
   }
 
   const shuffleDeck = () => {
@@ -319,11 +321,11 @@
 
   shuffleDeck(); // start shuffled
   //initDeck(); // start debug
+  drawCard();
 
 
   let score:number=0;
-  //setInterval(()=>{getHandScore},2000);
-
+  let scoreIleAuxMorts:number=0;
   interface Scoring {
     value:number;
     amount:number;
@@ -399,22 +401,29 @@
     // check il aux morts et death
     groupDiceValue.forEach((scoreLine)=>{
       if(scoreLine.valueName === 'death'){
-        if(turnCounter === 1 && scoreLine.amount > 3){
+        if(isIleAuxMorts === true){
+          //check ile aux morts tant que cest valide
+          if(scoreLine.amount <= iamCounter){
+            isDead = true;
+          }else{
+            iamCounter = scoreLine.amount;
+          }
+          scoreIleAuxMorts = scoreLine.amount * -100;
+        }else if(turnCounter === 1 && scoreLine.amount > 3 && !cardRule.startsWith("ship")){
           isIleAuxMorts = true;
+          iamCounter = scoreLine.amount ;
+          scoreIleAuxMorts = scoreLine.amount * -100;
         }else if(scoreLine.amount >= 3){
           isDead = true;
           allScoreBonus = false;
         }
       }
-    });
+    }); 
 
     // Rule Chest : change Scoring Amount to locked amount
     if(cardRule === 'chest' && isDead){
       groupDiceValue.map((scoreLine)=>{
-        console.log("chest check",scoreLine.amount, scoreLine.lockedAmount ,scoreLine.valueName  )
         scoreLine.amount = scoreLine.lockedAmount;
-        console.log("chest check 2",scoreLine.amount, scoreLine.lockedAmount ,scoreLine.valueName  )
-
       });
     }
 
@@ -448,7 +457,7 @@
       let swordAmount:number = parseInt(cardRule.slice(-1));
       groupDiceValue.forEach((scoreLine)=>{
         if(scoreLine.valueName === 'sword'){
-          if(scoreLine.amount >= swordAmount){
+          if(scoreLine.amount >= swordAmount && !isDead){
             total += shipValues[swordAmount-2];
           }else{
             total = shipValues[swordAmount-2] * -1;
@@ -459,33 +468,21 @@
       total = 0;
     }
 
-    score = total; 
-    validateShuffleDiceRights();
+    score = (!isIleAuxMorts)? total : scoreIleAuxMorts ; 
+    validateShuffleDiceAllowed();
 }
  
 
 </script>
-<div class="bkg">
 
-  <video
-    src="https://media.giphy.com/media/u6OUfjQ2KPIySR1o8r/giphy.mp4"
-    class="bkgVideo"
-    autoplay
-    loop
-    bind:playbackRate={slowVid}
-  >
-    <track default kind="captions" srclang="en" />
-    Sorry, your browser doesn't support embedded videos.
-  </video>
-</div>
+<Bkg isIleAuxMorts={isIleAuxMorts} isDead={isDead}/>
 
 <main>
   <section class="playerZone">
-      <Points score={score}/>
-      <p>turn : {turnCounter}<br>dead : {isDead} <br> IAM: {isIleAuxMorts}</p>
+      <Points score={score} iam='{isIleAuxMorts}' />
   </section>
+
   <section class="deckZone">
-    
     <div class="deck pioche" on:click={nextTurn}>
       {#each deck as myCard (myCard.id)}
         <Cards opt={myCard} />
@@ -505,12 +502,11 @@
 
   <section class="diceZone">
     {#each diceBag as myDie (myDie.id)}
-      <Dice bind:opt={myDie} />
+      <Dice bind:opt={myDie} bind:rerollDeatRule={rerollDeatRule} />
     {/each}
   </section>
 
   <section class="ctrlZone">
-
 
     <div class="options">
       <button on:click={sortBag} class="sort " disabled={autoSort}>Ordoner</button>
@@ -519,25 +515,10 @@
       <label for="autoSort">Auto-Sort</label>
     </div>
     
-    <button on:click={shuffleDice} disabled={cannotShuffleDice} class="shuffle">Brasser les {activeDice} dés</button>
+    <ShuffleBtn on:click={shuffleDice} disabled={cannotShuffleDice} content="Brasser les dés ({activeDice})"/>
 
-    
   </section>
 </main>
-<!-- <main>
-
-
-  <section class="ctrlZone">
-    
-    
-    <div class="options">
-        <button class="sort" on:click={resetBag}>Reset</button>
-    <button class="sort" on:click={shuffleDeck}>ShuffleDeck</button>
-
-    </div>
-    
-  </section>
-</main> -->
 
 <style>
   :root {
@@ -545,17 +526,6 @@
       Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   }
 
-  /* main {
-    text-align: center;
-    padding: 1em;
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    justify-content: center;
-    z-index: 1;
-  
-  } */
 /* GRID */
   main {
     display: grid;
@@ -643,53 +613,13 @@
 
 /* bouttons */
 
-  .shuffle {
-    font-size: 22px;
-    padding: 20px;
-    cursor: pointer;
-    transition: transform 60ms linear, box-shadow 60ms linear, color 100ms linear;
-    transform-origin: center;
-    background: rgb(225, 197, 88);
-    color: #555236;
-    box-shadow: #839122 3px 4px 0;
-    outline: none;
-    border: none;
-    border-radius: 10px;
-    text-shadow: #c8e16f 1px 1px 0px;
-  }
-  .shuffle:disabled{
-    color: #9d9657;
-    cursor: not-allowed;
-  }
-  .shuffle:active:not(.shuffle:disabled){
-    transform: scale(0.99) translate(2px, 2px);
-    box-shadow: #839122 2px 2px 0;
-  }
-  
+
+
   .options {
     margin: 0 10px;
   }
   .sort {
     padding: 10px;
   }
- 
-
-/* template bkg */
-  .bkg{
-    position: absolute;
-    width:100vw;
-    height:100vh;
-    overflow: hidden;
-    background: #117aa4;
-  }
-  .bkgVideo {
-    position: absolute;
-    z-index: 0;
-    height: 100vh;
-    opacity: 0.5;
-    left: -40%;
-  }
-
- 
 
 </style>

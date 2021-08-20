@@ -1,14 +1,19 @@
 <script lang="ts">
     import type { Die } from "../modules/die";
     export let opt: Die;
+    export let rerollDeatRule:boolean = false;
 
     $: cssLocked = opt.isLocked ? "locked" : "";
     $: cssIsShuffleing = opt.isShuffleing ? "isShuffleing" : "";
     $: cssIsShuffleing2 = opt.isShuffleing ? 0.8 : 1;
 
     const lockToggle = () => {
-        if(opt.ordery >= 0){
+        if(rerollDeatRule == true && opt.valueName === 'death'){
             opt.isLocked = opt.isLocked ? false : true;
+            rerollDeatRule = false;
+        }else if(opt.ordery >= 0 && opt.valueName !== 'death'){ // cant lock while dicebag is unshuffled
+            opt.isLocked = opt.isLocked ? false : true;
+
         } 
     };
 

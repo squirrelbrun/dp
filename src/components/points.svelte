@@ -2,19 +2,22 @@
 <script lang="ts">
     // import type { Card } from "../modules/points";
     export let score:number = 0;
+    export let iam:boolean = false;
 
     $:isNegative = (score < 0)? true : false; 
+    $:scoreMessage = (!iam)? "Points" : "Points aux autres joueurs"; 
     
 </script>
 
-<p class="score isNegative-{isNegative}">{score}</p>
-<p>Points</p>
+<p class="score isNegative-{isNegative} isIAM-{iam}">{score}</p>
+<p class="messageIAM-{iam}">{scoreMessage}</p>
 
 <style>
     p{
         margin: 0 10px;
         font-size: 30px;
         font-weight: bold;
+        text-align: center;
     }
   /* score */
     .score{
@@ -31,5 +34,12 @@
     .isNegative-true{
         --color: rgb(249, 107, 107);
         --colorShadow: #953232;
+    }
+    .isIAM-true{
+        --color: #f0cbab;
+        --colorShadow: #9d9760;
+    }
+    .messageIAM-true{
+        font-size: 17px;
     }
 </style>
