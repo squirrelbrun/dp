@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { Die } from "./modules/die";
   import type { Card } from "./modules/card";
+  import type { Player } from "./modules/player";
   import Dice from "./components/dice.svelte";
   import Cards from "./components/cards.svelte";
   import Points from "./components/points.svelte";
   import Bkg from "./components/bkg.svelte";
   import ShuffleBtn from  "./components/shuffleBtn.svelte";
+  import PlayerCard from  "./components/playerCard.svelte";
 //import Deck from "./components/deck.svelte";
 
   const diceBagQt: number = 8;
@@ -28,6 +30,8 @@
   let iamCounter:number = 0;
   let throttleDiceBag: boolean = false;
   let rerollDeatRule:boolean = false;
+  let gameStarted:boolean = false;
+  let playerCount:number = 2; // range 2 a 5
 
 
   // init DiceBag
@@ -281,7 +285,9 @@
       activeCard[0]=activeCard[0];
       
       setTimeout(()=>{
-        // todo : log score
+        
+        appendScore(score);
+
         resetPlayerTurn();
         activeCard[0].isFaceDown = false
         deck = deck; //force reactivity
@@ -319,9 +325,9 @@
     return array;
   }
 
-  shuffleDeck(); // start shuffled
+  // start shuffled
   //initDeck(); // start debug
-  drawCard();
+  
 
 
   let score:number=0;
@@ -415,6 +421,8 @@
           scoreIleAuxMorts = scoreLine.amount * -100;
         }else if(scoreLine.amount >= 3){
           isDead = true;
+        }
+        if(scoreLine.amount > 0){
           allScoreBonus = false;
         }
       }
@@ -474,12 +482,94 @@
 
 let videoDisabled:boolean = false;
 
+
+//// DEV PLAYERS
+
+let listPlayers:Array<Player> = [
+  { 
+    id: 0,
+    isActive: false,
+    playerScore: 0,
+    playerName: 'Bob',
+  },
+  { 
+    id: 1,
+    isActive: false,
+    playerScore: 0,
+    playerName: 'Pat',
+  },
+  { 
+    id: 2,
+    isActive: false,
+    playerScore: 0,
+    playerName: 'Squid',
+  },
+  { 
+    id: 3,
+    isActive: false,
+    playerScore: 0,
+    playerName: 'Sandy',
+  },
+  { 
+    id: 4,
+    isActive: false,
+    playerScore: 0,
+    playerName: 'Crabs',
+  },
+]
+
+const appendScore = (myScore:number = 0) => {
+  let playerKey:number = -1;
+  if(isIleAuxMorts){
+    listPlayers.map((aPlayer,id)=>{
+      if(!aPlayer.isActive){
+        aPlayer.playerScore += myScore;
+        if(aPlayer.playerScore < 0 ){
+          aPlayer.playerScore = 0;
+        }
+      }else{
+        playerKey = id;
+        aPlayer.isActive = false;
+      }
+    })
+  }else{
+    listPlayers.map((aPlayer,id)=>{
+      if(aPlayer.isActive){
+        aPlayer.playerScore += myScore;
+        if(aPlayer.playerScore < 0 ){
+          aPlayer.playerScore = 0;
+        }
+        playerKey = id;
+        aPlayer.isActive = false;
+      }
+    })
+  }
+
+  nextActivePlayer(playerKey);
+}
+
+const nextActivePlayer = (key:number) => {
+  if(key === listPlayers.length-1 || key === -1){
+    listPlayers[0].isActive = true;
+  }else{
+    listPlayers[key+1].isActive = true;
+  }
+}
+
+const startGame = () =>{
+  listPlayers = listPlayers.slice(0,playerCount);
+  gameStarted = true;
+  shuffleDeck();
+}
+
+
 </script>
 
 <Bkg {isIleAuxMorts} {isDead} {videoDisabled}/>
 
 <main>
-  <section class="playerZone">
+  {#if gameStarted}
+  <section class="playerScoreZone">
       <Points score={score} iam='{isIleAuxMorts}' />
   </section>
 
@@ -507,6 +597,13 @@ let videoDisabled:boolean = false;
     {/each}
   </section>
 
+  <section class="allScoreZone">
+    {#each listPlayers as player (player.id)}
+      <PlayerCard opt={player} />
+    {/each}
+
+  </section>
+
   <section class="ctrlZone">
 
     <div class="options">
@@ -523,6 +620,17 @@ let videoDisabled:boolean = false;
     <ShuffleBtn on:click={shuffleDice} disabled={cannotShuffleDice} content="Brasser les dés ({activeDice})"/>
 
   </section>
+  {:else}
+  <section class="startScreen">
+
+    <!-- todo Make it component + message code! -->
+    <h1>Combien de joueurs ?</h1>
+    <h2>{playerCount}</h2>
+    <input type="range" min="2" max="5" bind:value="{playerCount}">
+    <button on:click={startGame}> start</button>
+  </section>
+    
+  {/if}
 </main>
 
 <style>
@@ -535,10 +643,10 @@ let videoDisabled:boolean = false;
   main {
     display: grid;
     position: relative;
-    grid-template-columns: 33% 33% 33%;
-    grid-template-rows: 33% auto 33%;
+    grid-template-columns: 33% 33% 33% ;
+    grid-template-rows: 33% auto 17% 17%;
     justify-items: start;
-    justify-content: space-between; 
+    justify-content: space-evenly; 
     gap: 15px 0px;
     z-index: 1;
     /* background: beige; */
@@ -550,7 +658,15 @@ let videoDisabled:boolean = false;
     height: 100%;
   }
 
-  .playerZone {
+  .startScreen{
+    grid-row-start: 1;
+    grid-column: 1 / 4;
+    grid-row: 1 / span 3;
+    padding: 30px;
+  }
+ 
+
+  .playerScoreZone {
     /* background: rgba(255, 255, 0, 0.2); */
     grid-row-start: 1;
     grid-column: 1 / 2;
@@ -592,6 +708,14 @@ let videoDisabled:boolean = false;
     justify-content: space-around;
   }
 
+  .allScoreZone {
+    grid-row-start: 4;
+    grid-column: 1 / span 3;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+  }
+
 
 
 /* CARDS */
@@ -622,6 +746,7 @@ let videoDisabled:boolean = false;
 
   .options {
     margin: 0 10px;
+    font-size: 9px;
   }
   .sort {
     padding: 10px;

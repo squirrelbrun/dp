@@ -8,7 +8,8 @@
 
 <style>
   .shuffle {
-    font-size: 22px;
+    font-size: 16px;
+    font-weight: bold;
     padding: 20px;
     cursor: pointer;
     transition: transform 60ms linear, box-shadow 60ms linear, color 100ms linear;
