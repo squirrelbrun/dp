@@ -1,19 +1,12 @@
 <script type='ts'>
     import type { Player } from "../modules/player";
+    import Avatar from "./avatar.svelte";
     export let opt: Player;
-
-    let playerAvatars = [
-        "https://nickelodeonuniverse.com/wp-content/uploads/Spongebob.png",
-        "https://nickelodeonuniverse.com/wp-content/uploads/Patrick.png",
-        "https://nickelodeonuniverse.com/wp-content/uploads/Squidward.png",
-        "https://nickelodeonuniverse.com/wp-content/uploads/Sandy.png",
-        "https://nickelodeonuniverse.com/wp-content/uploads/Mr.Krabs_.png",
-    ];
 
 </script>
 
 <div class="player isActive-{opt.isActive}">
-    <img class="avatar" src="{playerAvatars[opt.id]}" alt="sd {opt.id}" />
+    <Avatar idAvatar={opt.id}/>
     <p class="name">{opt.playerName}</p>
     <p class="score">{opt.playerScore} <sup>pts</sup></p>
 </div>
@@ -39,14 +32,7 @@
     .player:nth-child(even){
         background-color: rgb(86 171 212 / 48%)
     }
-    .avatar{
-        border: solid 3px #4162ab;
-        border-radius: 50%;
-        position: relative;
-        width: 42px;
-        
-        margin-bottom: 8px;
-    }
+    
     .isActive-true .avatar{
         box-shadow: rgb(220, 210, 93) 0 0 1px 3px;
     }

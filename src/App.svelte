@@ -2,13 +2,13 @@
   import type { Die } from "./modules/die";
   import type { Card } from "./modules/card";
   import type { Player } from "./modules/player";
+  import Avatar from "./components/avatar.svelte";
   import Dice from "./components/dice.svelte";
   import Cards from "./components/cards.svelte";
   import Points from "./components/points.svelte";
   import Bkg from "./components/bkg.svelte";
   import ShuffleBtn from  "./components/shuffleBtn.svelte";
   import PlayerCard from  "./components/playerCard.svelte";
-//import Deck from "./components/deck.svelte";
 
   const diceBagQt: number = 8;
   const diceValuesNames = [
@@ -569,7 +569,12 @@ const startGame = () =>{
 <main>
   {#if gameStarted}
   <section class="playerScoreZone">
-      <Points score={score} iam='{isIleAuxMorts}' />
+    {#each listPlayers as player (player.id)}  
+      {#if player.isActive}
+        <Avatar idAvatar={player.id}/>
+      {/if}  
+    {/each}
+    <Points score={score} iam='{isIleAuxMorts}' />
   </section>
 
   <section class="deckZone">

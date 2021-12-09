@@ -3,7 +3,6 @@
     export let opt: Card;
     let faceUpPath = `./src/assets/cards/card_${opt.value}_${opt.valueName}.jpg`;
     const faceDownPath = `./src/assets/cards/card_0_back.png`;
-    //$: myPath = opt.isFaceDown?faceDownPath:faceUpPath; 
 </script>
 <div class="card  isFaceDown-{opt.isFaceDown} isDiscarded-{opt.isDiscarded}">
     <img title="{opt.altRules}" alt="{opt.altRules}" id="card_{opt.id}" src='{faceUpPath}' />
@@ -12,8 +11,7 @@
 
 <style>
     .card {
-        /* height: 130px; */
-        /* width: 80px; */
+
         height: 42vw;
         width: 25vw;
 
@@ -26,7 +24,6 @@
     }
     .card.isFaceDown-true{
         transform: translateX(130%) rotateY(-180deg);
-        /* transform: rotateY(-180deg) translateX(-140%); */
         box-shadow: rgba(0,0,0,0.05) -3px 2px 3px;
         transition: transform 300ms;
        
@@ -34,7 +31,6 @@
 
     .card.isDiscarded-true{
         transform: translateX(10%) rotateY(-180deg);
-        /* transform: rotateY(-180deg) translateX(-14%); */
         z-index: 0;
     }
 
