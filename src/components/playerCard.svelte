@@ -20,9 +20,7 @@
         flex-direction: column;
         justify-content: flex-start;
         overflow: hidden;
-        justify-content: flex-start;
         align-items: center;
-        overflow: hidden;
         position: relative;
         padding: 10px 1% 0 1%;
         border-top-left-radius: 10px;
@@ -33,7 +31,7 @@
         background-color: rgb(86 171 212 / 48%)
     }
     
-    .isActive-true .avatar{
+    .isActive-true{
         box-shadow: rgb(220, 210, 93) 0 0 1px 3px;
     }
     p{
