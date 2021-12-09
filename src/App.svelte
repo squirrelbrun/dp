@@ -484,7 +484,6 @@ let videoDisabled:boolean = false;
 
 
 //// DEV PLAYERS
-
 let listPlayers:Array<Player> = [
   { 
     id: 0,
@@ -739,11 +738,7 @@ const startGame = () =>{
 
 /* dice */
 
-
 /* bouttons */
-
-
-
   .options {
     margin: 0 10px;
     font-size: 9px;

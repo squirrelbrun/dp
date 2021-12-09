@@ -3,8 +3,8 @@
     export let opt: Player;
 
     let playerAvatars = [
-        "https://pbs.twimg.com/profile_images/1210618202457292802/lt9KD2lt.jpg",
-        "https://yt3.ggpht.com/ccMnGimmDJsDob-qBfucafSNYmZMSejE8eIhgybqiOldkAvMELHkADPtgfGyuxIAJ2YFhBntS9o=s900-c-k-c0x00ffffff-no-rj",
+        "https://nickelodeonuniverse.com/wp-content/uploads/Spongebob.png",
+        "https://nickelodeonuniverse.com/wp-content/uploads/Patrick.png",
         "https://nickelodeonuniverse.com/wp-content/uploads/Squidward.png",
         "https://nickelodeonuniverse.com/wp-content/uploads/Sandy.png",
         "https://nickelodeonuniverse.com/wp-content/uploads/Mr.Krabs_.png",
